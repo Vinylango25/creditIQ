@@ -12,7 +12,7 @@ services:
       - key: SESSION_SECRET_KEY
         generateValue: true
       - key: FRONTEND_ORIGIN
-        value: https://fraudshield-4.onrender.com
+        value: https://fraudshield-ui.onrender.com
       - key: KMP_DUPLICATE_LIB_OK
         value: "TRUE"
       - key: FLAML_TIME_BUDGET
@@ -23,3 +23,15 @@ services:
       name: fraudshield-data
       mountPath: /data
       sizeGB: 2
+
+  - type: web
+    name: fraudshield-ui
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install --legacy-peer-deps && npm run build -- --configuration production
+    staticPublishPath: dist/fraud-detection/browser
+    pullRequestPreviewsEnabled: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
