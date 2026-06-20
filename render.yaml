@@ -24,8 +24,9 @@ services:
       mountPath: /data
       sizeGB: 2
 
-  - type: static
+  - type: web
     name: fraudshield-ui
+    env: static
     rootDir: frontend
     buildCommand: npm install --legacy-peer-deps && npm run build -- --configuration production
     staticPublishPath: dist/fraud-detection/browser
