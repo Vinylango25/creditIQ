@@ -26,11 +26,10 @@ services:
 
   - type: web
     name: fraudshield-ui
-    env: static
+    runtime: static
     rootDir: frontend
     buildCommand: npm install --legacy-peer-deps && npm run build -- --configuration production
     staticPublishPath: dist/fraud-detection/browser
-    pullRequestPreviewsEnabled: false
     routes:
       - type: rewrite
         source: /*
