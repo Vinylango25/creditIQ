@@ -29,7 +29,7 @@ services:
     runtime: static
     rootDir: frontend
     buildCommand: npm install --legacy-peer-deps && npm run build -- --configuration production
-    staticPublishPath: dist/fraud-detection/browser
+    staticPublishPath: dist/fraud-detection
     routes:
       - type: rewrite
         source: /*
