@@ -4,11 +4,7 @@ services:
     runtime: python
     rootDir: backend
     pythonVersion: "3.11.9"
-    buildCommand: >
-      pip install -r requirements.txt &&
-      cd /opt/render/project/src/frontend &&
-      npm install --legacy-peer-deps &&
-      npm run build -- --configuration production
+    buildCommand: "bash /opt/render/project/src/build.sh"
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
     plan: free
     envVars:
