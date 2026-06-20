@@ -75,8 +75,10 @@ def on_startup():
 _CANDIDATE_PATHS = [
     # Relative: works locally and when rootDir=backend on Render
     Path(__file__).resolve().parent.parent.parent / "frontend" / "dist" / "fraud-detection" / "browser",
+    Path(__file__).resolve().parent.parent.parent / "frontend" / "dist" / "fraud-detection",
     # Absolute Render path
     Path("/opt/render/project/src/frontend/dist/fraud-detection/browser"),
+    Path("/opt/render/project/src/frontend/dist/fraud-detection"),
 ]
 
 _FRONTEND_DIST: Path | None = next((p for p in _CANDIDATE_PATHS if p.exists()), None)
