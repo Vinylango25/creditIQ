@@ -12,6 +12,10 @@ backend/models/*.joblib
 backend/data/mlflow.db
 backend/data/*.db-journal
 
+# Proprietary pipeline logic
+backend/pipeline/train.py
+backend/pipeline/run_pipeline.py
+
 # Node
 frontend/node_modules/
 frontend/dist/
