@@ -1,6 +1,6 @@
 import { APP_INITIALIZER, ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideEchartsCore } from 'ngx-echarts';
 import * as echarts from 'echarts/core';
 import {
@@ -16,6 +16,8 @@ import { CanvasRenderer } from 'echarts/renderers';
 
 import { routes } from './app.routes';
 import { ThemeService } from './core/theme.service';
+import { ApiService } from './core/api.service';
+import { StaticDataService } from './core/static-data.service';
 
 echarts.use([
   BarChart, LineChart, PieChart, ScatterChart, RadarChart,
@@ -27,7 +29,7 @@ echarts.use([
 ]);
 
 function initTheme(theme: ThemeService) {
-  return () => { /* ThemeService constructor + effect() applies data-theme immediately */ };
+  return () => { /* ThemeService applies data-theme immediately */ };
 }
 
 export const appConfig: ApplicationConfig = {
@@ -35,8 +37,10 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(),   // no auth interceptor
+    provideHttpClient(),
     provideEchartsCore({ echarts }),
+    // ── Serve all data from pre-built JSON assets (no backend needed) ────
+    { provide: ApiService, useClass: StaticDataService },
     {
       provide:    APP_INITIALIZER,
       useFactory: initTheme,

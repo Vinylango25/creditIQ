@@ -1,0 +1,1 @@
+{"fraud_count": 4126, "legit_count": 115874, "imbalance_ratio": 28.08, "strategy_used": "class_weight", "strategy_comparison": {}}

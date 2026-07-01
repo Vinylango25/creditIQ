@@ -1,0 +1,1 @@
+{"baseline": [{"name": "Credit Losses", "value": 60274547.0}, {"name": "Fraud Losses", "value": 20236181.0}, {"name": "Ops Cost", "value": 3149965.0}], "model": [{"name": "Credit Losses", "value": 25284921.0}, {"name": "Fraud Losses", "value": 2851246.0}, {"name": "Ops Cost", "value": 472500.0}, {"name": "Model Infra", "value": 2370000.0}]}

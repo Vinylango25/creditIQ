@@ -1,0 +1,1 @@
+{"total_records": 12000, "fpd_count": 7055, "fpd_rate": 0.5879, "fpd_pct": 58.79, "by_bucket": {"1-7": 795, "15-30": 4415, "8-14": 1845}, "by_product": [{"product": "bnpl", "total": 2444}, {"product": "emergency_loan", "total": 2398}, {"product": "instant_mobile", "total": 2400}, {"product": "salary_advance", "total": 2408}, {"product": "sme_loan", "total": 2350}]}
