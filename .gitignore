@@ -6,16 +6,17 @@ __pycache__/
 venv/
 *.pyc
 
-# ML model artifacts (large)
+# ML model artifacts (large) — use git LFS or exclude
 backend/models/*.pkl
 backend/models/*.joblib
+backend/mlruns/
+backend/catboost_*/
 backend/data/mlflow.db
 backend/data/*.db-journal
 
 # Large data files — NOT committed (download separately)
 backend/data/raw/home-credit/
 backend/data/home-credit-default-risk.zip
-backend/catboost_*/
 
 # SQLite DB — not committed (auto-created on startup)
 backend/data/*.db
