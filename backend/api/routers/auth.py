@@ -23,9 +23,10 @@ _COOKIE_NAME = "fraud_session"
 
 # Demo users — in production, this would hit a real user store
 _DEMO_USERS = {
-    "analyst@umba.com": {"password": "umba2026", "name": "Fraud Analyst", "role": "analyst"},
-    "admin@umba.com":   {"password": "admin2026", "name": "Admin",         "role": "admin"},
-    "demo@umba.com":    {"password": "demo",       "name": "Demo User",    "role": "viewer"},
+    # Current credentials
+    "analyst@creditiq.ai": {"password": "analyst2026", "name": "Risk Analyst", "role": "analyst"},
+    "admin@creditiq.ai":   {"password": "admin2026",   "name": "Admin",        "role": "admin"},
+    "demo@creditiq.ai":    {"password": "demo",        "name": "Demo User",    "role": "viewer"},
 }
 
 

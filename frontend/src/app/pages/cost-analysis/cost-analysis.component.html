@@ -1,0 +1,220 @@
+<div class="dashboard" *ngIf="!loading; else loadTpl">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Cost Analysis &amp; Model ROI</h1>
+      <p class="page-sub">Simulated financial impact — credit losses · fraud losses · ops savings · ROI</p>
+    </div>
+    <div class="disclaimer-pill">⚠️ Simulated figures for illustration</div>
+  </div>
+
+  <!-- Executive KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-card kpi-card--success">
+      <div class="kpi-card__icon">💰</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Total Saved (Lifetime)</div>
+        <div class="kpi-card__value">KES {{ fmtKES(summary.total_saved_kes) }}</div>
+        <div class="kpi-card__sub">vs naive approve-all baseline</div>
+      </div>
+    </div>
+    <div class="kpi-card" [class]="roiClass(summary.lifetime_roi_pct || 0)">
+      <div class="kpi-card__icon">📈</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Lifetime ROI</div>
+        <div class="kpi-card__value">{{ (summary.lifetime_roi_pct || 0).toFixed(0) }}%</div>
+        <div class="kpi-card__sub">Net benefit / model cost</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--danger">
+      <div class="kpi-card__icon">🛡️</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Credit Loss Saved</div>
+        <div class="kpi-card__value">KES {{ fmtKES(summary.total_credit_saved_kes) }}</div>
+        <div class="kpi-card__sub">Default reduction via scoring</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">🔒</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Fraud Loss Saved</div>
+        <div class="kpi-card__value">KES {{ fmtKES(summary.total_fraud_saved_kes) }}</div>
+        <div class="kpi-card__sub">Fraud detection impact</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--info">
+      <div class="kpi-card__icon">⚙️</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Ops Cost Saved</div>
+        <div class="kpi-card__value">KES {{ fmtKES(summary.total_ops_saved_kes) }}</div>
+        <div class="kpi-card__sub">Automation vs manual review</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">⚡</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">FP Opportunity Cost</div>
+        <div class="kpi-card__value">KES {{ fmtKES(summary.total_fp_cost_kes) }}</div>
+        <div class="kpi-card__sub">Revenue foregone (good borrowers declined)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key assumptions info bar -->
+  <div class="assumptions-bar">
+    <strong>Key Assumptions:</strong>
+    Avg loan KES 8,500 · Baseline default 18% · Model default ~9.5% · LGD 55% · Fraud = 22% of defaults · Model infra KES 180K/quarter · Manual review KES 350/hr (45 min/case)
+  </div>
+
+  <!-- ROI Trend + Default Rate Comparison -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">📈 ROI Trend Over Time</h3>
+      <p class="chart-card__sub">Quarterly net benefit and ROI — model value compounds as it improves</p>
+      <app-chart [options]="roiOpts" height="240px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">📉 Default Rate: Baseline vs Model</h3>
+      <p class="chart-card__sub">Model consistently reduces default rate vs naive approve-all</p>
+      <app-chart [options]="defaultCompareOpts" height="240px"></app-chart>
+    </div>
+  </div>
+
+  <!-- Waterfall + Savings Stacked -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🪜 Cost Savings Waterfall (Lifetime)</h3>
+      <p class="chart-card__sub">From baseline total cost → net benefit after model costs</p>
+      <app-chart [options]="waterfallOpts" height="240px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">📊 Cumulative Savings by Category</h3>
+      <p class="chart-card__sub">Credit loss reduction + fraud savings + ops automation per quarter</p>
+      <app-chart [options]="savingsOpts" height="240px"></app-chart>
+    </div>
+  </div>
+
+  <!-- Cost Breakdown -->
+  <div class="chart-card" style="margin-bottom:1.5rem">
+    <h3 class="chart-card__title">🍩 Cost Breakdown — Baseline (left) vs With Model (right)</h3>
+    <p class="chart-card__sub">Share of total cost by category — shows shift in cost structure when model is deployed</p>
+    <app-chart [options]="breakdownOpts" height="260px"></app-chart>
+  </div>
+
+  <!-- Period Table -->
+  <div class="table-card">
+    <div class="table-card__header">
+      <h3>📋 Quarterly Cost Analysis Detail</h3>
+      <span class="badge badge--info">{{ periods.length }} periods</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Approved</th>
+            <th>Disbursed (KES)</th>
+            <th>Baseline Cost</th>
+            <th>Model Cost</th>
+            <th>Total Saved</th>
+            <th>Model Infra</th>
+            <th>Net Benefit</th>
+            <th>ROI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of periods">
+            <td><strong>{{ p.period }}</strong></td>
+            <td>{{ p.approved_loans | number }}</td>
+            <td>{{ fmtKES(p.total_disbursed_kes) }}</td>
+            <td class="cost-neg">{{ fmtKES(p.baseline_total_kes) }}</td>
+            <td>{{ fmtKES(p.model_total_kes) }}</td>
+            <td class="cost-pos">{{ fmtKES(p.total_saved_kes) }}</td>
+            <td>{{ fmtKES(p.model_infra_kes) }}</td>
+            <td [class.cost-pos]="p.net_benefit_kes > 0" [class.cost-neg]="p.net_benefit_kes < 0">
+              {{ fmtKES(p.net_benefit_kes) }}
+            </td>
+            <td>
+              <span class="badge"
+                [class.badge--success]="p.roi_pct >= 200"
+                [class.badge--info]="p.roi_pct >= 100 && p.roi_pct < 200"
+                [class.badge--warning]="p.roi_pct < 100">
+                {{ p.roi_pct.toFixed(0) }}%
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Scenario Simulator -->
+  <div class="scenario-panel">
+    <h2 class="section-title">🔬 What-If Scenario Simulator</h2>
+    <p class="section-sub">Adjust assumptions to project monthly savings for your portfolio</p>
+
+    <div class="sim-inputs">
+      <div class="sim-input">
+        <label>Monthly Loans</label>
+        <input type="number" [(ngModel)]="sim.monthly_loans" min="100" step="100" />
+      </div>
+      <div class="sim-input">
+        <label>Avg Loan (KES)</label>
+        <input type="number" [(ngModel)]="sim.avg_loan_kes" min="500" step="500" />
+      </div>
+      <div class="sim-input">
+        <label>Baseline Default Rate</label>
+        <input type="number" [(ngModel)]="sim.baseline_dr" min="0.01" max="0.5" step="0.01" />
+      </div>
+      <div class="sim-input">
+        <label>Model Default Rate</label>
+        <input type="number" [(ngModel)]="sim.model_dr" min="0.01" max="0.5" step="0.01" />
+      </div>
+      <div class="sim-input">
+        <label>LGD</label>
+        <input type="number" [(ngModel)]="sim.lgd" min="0.1" max="1" step="0.05" />
+      </div>
+      <div class="sim-input">
+        <label>Fraud % of Defaults</label>
+        <input type="number" [(ngModel)]="sim.fraud_pct_of_default" min="0" max="1" step="0.01" />
+      </div>
+      <div class="sim-input">
+        <label>Model Cost / Loan (KES)</label>
+        <input type="number" [(ngModel)]="sim.model_cost_per_loan" min="0.5" step="0.5" />
+      </div>
+      <div class="sim-input sim-input--btn">
+        <button class="btn-primary" (click)="runScenario()">Run Simulation</button>
+      </div>
+    </div>
+
+    <div class="sim-results" *ngIf="scenario?.savings">
+      <div class="sr-highlight">
+        <div class="sr-val">KES {{ fmtKES(scenario.savings.monthly_saved_kes) }}</div>
+        <div class="sr-lbl">Monthly Savings</div>
+      </div>
+      <div class="sr-highlight sr-highlight--green">
+        <div class="sr-val">KES {{ fmtKES(scenario.savings.annual_saved_kes) }}</div>
+        <div class="sr-lbl">Annual Savings</div>
+      </div>
+      <div class="sr-highlight sr-highlight--blue">
+        <div class="sr-val">{{ scenario.savings.roi_pct.toFixed(0) }}%</div>
+        <div class="sr-lbl">Projected ROI</div>
+      </div>
+      <div class="sr-highlight">
+        <div class="sr-val">{{ scenario.savings.default_rate_reduction_pct.toFixed(1) }}%</div>
+        <div class="sr-lbl">Default Rate Reduction</div>
+      </div>
+      <div class="sr-detail-grid">
+        <div class="sr-row"><span>Baseline defaults / month</span><span class="cost-neg">{{ scenario.baseline?.defaults | number }}</span></div>
+        <div class="sr-row"><span>Model defaults / month</span><span>{{ scenario.model?.defaults | number }}</span></div>
+        <div class="sr-row"><span>Credit loss saved</span><span class="cost-pos">KES {{ fmtKES(scenario.savings.monthly_saved_kes) }}</span></div>
+        <div class="sr-row"><span>Model infrastructure cost</span><span>KES {{ fmtKES(scenario.savings.model_cost_kes) }}</span></div>
+        <div class="sr-row"><span>Net benefit / month</span><span class="cost-pos">KES {{ fmtKES(scenario.savings.net_benefit_kes) }}</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<ng-template #loadTpl>
+  <div class="loading-page"><div class="spinner-ring"></div><p>Loading cost data…</p></div>
+</ng-template>

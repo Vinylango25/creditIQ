@@ -1,0 +1,120 @@
+<div class="dashboard" *ngIf="!loading; else loadTpl">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Loan Portfolio</h1>
+      <p class="page-sub">All loans · risk metrics · status tracking</p>
+    </div>
+    <span class="badge badge--info">{{ total | number }} loans</span>
+  </div>
+
+  <!-- KPIs + Status Donut -->
+  <div class="chart-row chart-row--65-35">
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-card--info">
+        <div class="kpi-card__icon">💼</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Total Loans</div>
+          <div class="kpi-card__value">{{ (summary.total_loans || 0) | number }}</div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-card__icon">✅</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Paid</div>
+          <div class="kpi-card__value">{{ (summary.paid_loans || 0) | number }}</div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card--info">
+        <div class="kpi-card__icon">🔄</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Active</div>
+          <div class="kpi-card__value">{{ (summary.active_loans || 0) | number }}</div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card--danger">
+        <div class="kpi-card__icon">🚨</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Default / Written Off</div>
+          <div class="kpi-card__value">{{ ((summary.defaulted_loans || 0) + (summary.written_off_loans || 0)) | number }}</div>
+          <div class="kpi-card__sub">{{ (summary.default_pct || 0).toFixed(2) }}% rate</div>
+        </div>
+      </div>
+      <div class="kpi-card kpi-card--info" style="grid-column: span 2">
+        <div class="kpi-card__icon">🏦</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Total Disbursed</div>
+          <div class="kpi-card__value">KES {{ fmtKES(summary.total_disbursed_kes) }}</div>
+          <div class="kpi-card__sub">Outstanding: KES {{ fmtKES(summary.outstanding_kes) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">Portfolio Status</h3>
+      <app-chart [options]="statusOpts" height="220px"></app-chart>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+      <option value="">All Statuses</option>
+      <option value="active">Active</option>
+      <option value="paid">Paid</option>
+      <option value="default">Default</option>
+      <option value="written_off">Written Off</option>
+    </select>
+    <select [(ngModel)]="productFilter" (change)="applyFilters()">
+      <option value="">All Products</option>
+      <option value="instant_mobile">Instant Mobile</option>
+      <option value="salary_advance">Salary Advance</option>
+      <option value="bnpl">BNPL</option>
+      <option value="sme_loan">SME Loan</option>
+      <option value="emergency_loan">Emergency Loan</option>
+    </select>
+    <input type="text" placeholder="Cohort (e.g. 2024-Q1)" [(ngModel)]="cohortFilter" (change)="applyFilters()" />
+  </div>
+
+  <!-- Loans Table -->
+  <div class="table-card">
+    <div class="table-card__header">
+      <h3>Loans ({{ total | number }})</h3>
+      <div class="pagination">
+        <button (click)="prevPage()" [disabled]="page === 1">‹</button>
+        <span>{{ page }} / {{ totalPages }}</span>
+        <button (click)="nextPage()" [disabled]="page >= totalPages">›</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Loan ID</th><th>Applicant</th><th>Product</th>
+            <th>Amount</th><th>Status</th><th>PD</th><th>LGD</th>
+            <th>EL</th><th>Score</th><th>Cohort</th><th>DPD</th><th>Fraud</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of loans">
+            <td class="mono">{{ l.loan_id }}</td>
+            <td class="mono small">{{ l.applicant_id }}</td>
+            <td><span class="chan-tag">{{ l.product }}</span></td>
+            <td>{{ l.currency }} {{ l.amount | number:'1.0-0' }}</td>
+            <td><span class="badge" [class]="statusClass(l.status)">{{ l.status }}</span></td>
+            <td><span [class]="pdClass(l.pd)">{{ (l.pd * 100).toFixed(1) }}%</span></td>
+            <td>{{ (l.lgd * 100).toFixed(0) }}%</td>
+            <td>{{ l.el | number:'1.0-0' }}</td>
+            <td><strong>{{ l.score }}</strong></td>
+            <td>{{ l.cohort }}</td>
+            <td [class.text-danger]="l.dpd > 0">{{ l.dpd }}</td>
+            <td>{{ l.fraud_flag ? '🚨' : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<ng-template #loadTpl>
+  <div class="loading-page"><div class="spinner-ring"></div><p>Loading portfolio…</p></div>
+</ng-template>

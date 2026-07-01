@@ -1,0 +1,197 @@
+<div class="dashboard">
+
+  <!-- List view -->
+  <div *ngIf="!selectedApplicant">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Applicant Profiles</h1>
+        <p class="page-sub">Bureau data · SEON enrichment · loan history</p>
+      </div>
+      <span class="badge badge--info">{{ total | number }} applicants</span>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <select [(ngModel)]="countryFilter" (change)="applyFilters()">
+        <option value="">All Countries</option>
+        <option value="KE">Kenya (KE)</option>
+        <option value="NG">Nigeria (NG)</option>
+      </select>
+      <select [(ngModel)]="tuGradeFilter" (change)="applyFilters()">
+        <option value="">All Grades</option>
+        <option value="A">A — Excellent (750+)</option>
+        <option value="B">B — Good (700–749)</option>
+        <option value="C">C — Fair (650–699)</option>
+        <option value="D">D — Poor (600–649)</option>
+        <option value="E">E — Very Poor (&lt;600)</option>
+      </select>
+      <select [(ngModel)]="employmentFilter" (change)="applyFilters()">
+        <option value="">All Employment</option>
+        <option value="employed">Employed</option>
+        <option value="self_employed">Self-Employed</option>
+        <option value="unemployed">Unemployed</option>
+      </select>
+    </div>
+
+    <div *ngIf="loading" class="loading-page"><div class="spinner-ring"></div></div>
+
+    <div class="table-card" *ngIf="!loading">
+      <div class="table-card__header">
+        <h3>Applicants</h3>
+        <div class="pagination">
+          <button (click)="prevPage()" [disabled]="page===1">‹</button>
+          <span>{{ page }} / {{ totalPages }}</span>
+          <button (click)="nextPage()" [disabled]="page>=totalPages">›</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th><th>Name</th><th>Age</th><th>Country</th>
+              <th>Employment</th><th>Income (KES)</th>
+              <th>Bureau Score</th><th>Grade</th>
+              <th>Util %</th><th>DTI</th><th>SEON Score</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of applicants">
+              <td class="mono small">{{ a.applicant_id }}</td>
+              <td>{{ a.name }}</td>
+              <td>{{ a.age }}</td>
+              <td>{{ a.country }}</td>
+              <td><span class="chan-tag">{{ a.employment }}</span></td>
+              <td>{{ fmtKES(a.monthly_income) }}</td>
+              <td><span [class]="scoreClass(a.tu_score)"><strong>{{ a.tu_score }}</strong></span></td>
+              <td><span class="badge" [class]="gradeClass(a.tu_grade)">{{ a.tu_grade }}</span></td>
+              <td>{{ (a.credit_utilization * 100).toFixed(0) }}%</td>
+              <td>{{ (a.dti || 0).toFixed(2) }}</td>
+              <td><span [class]="seonClass(a.seon_score)">{{ a.seon_score }}</span></td>
+              <td><button class="btn-sm" (click)="viewDetail(a.applicant_id)">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail-view" *ngIf="selectedApplicant">
+    <button class="back-btn" (click)="closeDetail()">← Back to Applicants</button>
+
+    <div class="detail-header">
+      <div class="avatar-block">
+        <div class="avatar-lg">{{ selectedApplicant.name?.[0] }}</div>
+        <div>
+          <h1>{{ selectedApplicant.name }}</h1>
+          <p>{{ selectedApplicant.applicant_id }} · {{ selectedApplicant.country }} · Age {{ selectedApplicant.age }}</p>
+          <p>{{ selectedApplicant.employment_status }} @ {{ selectedApplicant.employer }}</p>
+        </div>
+      </div>
+      <div class="score-badge-lg" [class]="scoreClass(selectedApplicant.tu_score)">
+        <div class="sb-score">{{ selectedApplicant.tu_score }}</div>
+        <div class="sb-lbl">Bureau Score</div>
+        <div class="sb-grade">Grade {{ selectedApplicant.tu_grade }}</div>
+      </div>
+    </div>
+
+    <div class="sections-grid">
+
+      <!-- Income & Financials -->
+      <div class="section-card">
+        <h3>💰 Income &amp; Financials</h3>
+        <div class="field-grid">
+          <div class="field"><span>Monthly Income</span><strong>KES {{ fmtKES(selectedApplicant.monthly_income_kes) }}</strong></div>
+          <div class="field"><span>Monthly Expenses</span><strong>KES {{ fmtKES(selectedApplicant.monthly_expenses_kes) }}</strong></div>
+          <div class="field"><span>Debt-to-Income</span><strong [class.risk--high]="selectedApplicant.debt_to_income > 0.5">{{ (selectedApplicant.debt_to_income * 100).toFixed(1) }}%</strong></div>
+          <div class="field"><span>Total Debt</span><strong>KES {{ fmtKES(selectedApplicant.total_outstanding_debt) }}</strong></div>
+          <div class="field"><span>Credit Limit</span><strong>KES {{ fmtKES(selectedApplicant.total_credit_limit) }}</strong></div>
+          <div class="field"><span>Utilization</span><strong [class.risk--high]="selectedApplicant.credit_utilization > 0.7">{{ (selectedApplicant.credit_utilization * 100).toFixed(0) }}%</strong></div>
+        </div>
+      </div>
+
+      <!-- TransUnion Bureau -->
+      <div class="section-card">
+        <h3>🏦 TransUnion Bureau Data</h3>
+        <div class="field-grid">
+          <div class="field"><span>Total Accounts</span><strong>{{ selectedApplicant.total_accounts }}</strong></div>
+          <div class="field"><span>Open Accounts</span><strong>{{ selectedApplicant.open_accounts }}</strong></div>
+          <div class="field"><span>Delinquent</span><strong [class.risk--high]="selectedApplicant.delinquent_accounts > 0">{{ selectedApplicant.delinquent_accounts }}</strong></div>
+          <div class="field"><span>Credit History</span><strong>{{ selectedApplicant.months_credit_history }} months</strong></div>
+          <div class="field"><span>Hard Inquiries (12m)</span><strong [class.risk--high]="selectedApplicant.num_hard_inquiries_12m > 4">{{ selectedApplicant.num_hard_inquiries_12m }}</strong></div>
+          <div class="field"><span>Active Collections</span><strong [class.risk--high]="selectedApplicant.active_collections > 0">{{ selectedApplicant.active_collections }}</strong></div>
+          <div class="field"><span>Bankruptcy</span><strong [class.risk--high]="selectedApplicant.bankruptcy_flag">{{ selectedApplicant.bankruptcy_flag ? '⚠️ Yes' : '—' }}</strong></div>
+          <div class="field"><span>Judgement</span><strong [class.risk--high]="selectedApplicant.judgement_flag">{{ selectedApplicant.judgement_flag ? '⚠️ Yes' : '—' }}</strong></div>
+        </div>
+      </div>
+
+      <!-- SEON Digital Risk -->
+      <div class="section-card">
+        <h3>🔍 SEON Digital Risk</h3>
+        <div class="field-grid">
+          <div class="field"><span>Fraud Score</span><strong [class]="seonClass(selectedApplicant.seon_fraud_score)">{{ selectedApplicant.seon_fraud_score }}/100</strong></div>
+          <div class="field"><span>IP Risk</span><strong [class.risk--high]="selectedApplicant.seon_ip_risk_level === 'high'">{{ selectedApplicant.seon_ip_risk_level }}</strong></div>
+          <div class="field"><span>Email Valid</span><strong>{{ selectedApplicant.seon_email_deliverable ? '✅' : '❌' }}</strong></div>
+          <div class="field"><span>Phone Valid</span><strong>{{ selectedApplicant.seon_phone_valid ? '✅' : '❌' }}</strong></div>
+          <div class="field"><span>Social Matches</span><strong>{{ selectedApplicant.seon_social_match_count }}</strong></div>
+          <div class="field"><span>VPN / Tor</span><strong [class.risk--high]="selectedApplicant.seon_is_vpn || selectedApplicant.seon_is_tor">
+            {{ (selectedApplicant.seon_is_vpn ? 'VPN ' : '') + (selectedApplicant.seon_is_tor ? 'Tor' : '') || '—' }}
+          </strong></div>
+        </div>
+      </div>
+
+      <!-- Mobile / M-Pesa -->
+      <div class="section-card">
+        <h3>📱 Mobile &amp; M-Pesa</h3>
+        <div class="field-grid">
+          <div class="field"><span>Wallet Age</span><strong>{{ selectedApplicant.mobile_wallet_age_months }} months</strong></div>
+          <div class="field"><span>SIM Age</span><strong>{{ selectedApplicant.sim_age_months }} months</strong></div>
+          <div class="field"><span>M-Pesa Avg In</span><strong>KES {{ fmtKES(selectedApplicant.mpesa_monthly_avg_in) }}</strong></div>
+          <div class="field"><span>M-Pesa Avg Out</span><strong>KES {{ fmtKES(selectedApplicant.mpesa_monthly_avg_out) }}</strong></div>
+          <div class="field"><span>Loan History</span><strong>{{ selectedApplicant.mpesa_loan_history_count }} prior loans</strong></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- WoE Score Drivers -->
+    <div class="section-card" *ngIf="selectedApplicant.latest_score?.woe">
+      <h3>🧮 Score Drivers (Weight of Evidence)</h3>
+      <div class="woe-bars">
+        <div class="woe-row" *ngFor="let e of woeEntries(selectedApplicant.latest_score.woe)">
+          <span class="woe-feat">{{ fmtKey(e.key) }}</span>
+          <div class="woe-bar-wrap">
+            <div class="woe-bar" [style.width.%]="absBarPct(e.val)"
+                 [class.woe-bar--pos]="e.val > 0" [class.woe-bar--neg]="e.val < 0"></div>
+          </div>
+          <span class="woe-val" [class.woe-pos]="e.val > 0" [class.woe-neg]="e.val < 0">
+            {{ e.val > 0 ? '+' : '' }}{{ e.val.toFixed(2) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loans -->
+    <div class="section-card" *ngIf="selectedApplicant.loans?.length">
+      <h3>💳 Loan History ({{ selectedApplicant.loans.length }} loans)</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Loan ID</th><th>Product</th><th>Amount</th><th>Status</th><th>PD</th><th>DPD</th><th>Disbursed</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of selectedApplicant.loans">
+            <td class="mono small">{{ l.loan_id }}</td>
+            <td><span class="chan-tag">{{ l.product }}</span></td>
+            <td>{{ l.currency }} {{ l.amount | number:'1.0-0' }}</td>
+            <td><span class="badge" [class.badge--success]="l.status==='paid'" [class.badge--danger]="l.status==='default'||l.status==='written_off'" [class.badge--info]="l.status==='active'">{{ l.status }}</span></td>
+            <td>{{ (l.pd_score * 100).toFixed(1) }}%</td>
+            <td [class.text-danger]="l.days_past_due > 0">{{ l.days_past_due }}</td>
+            <td>{{ l.disbursement_date }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>

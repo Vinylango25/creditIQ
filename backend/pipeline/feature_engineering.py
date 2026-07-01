@@ -1,5 +1,5 @@
 """
-Feature Engineering Pipeline — Umba Fraud Detection Platform
+Feature Engineering Pipeline — CreditIQ Risk Intelligence Platform
 =============================================================
 
 Overview

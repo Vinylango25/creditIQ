@@ -4,7 +4,7 @@ export type Theme = 'light' | 'dark';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  private readonly STORAGE_KEY = 'fraudshield-theme';
+  private readonly STORAGE_KEY = 'creditiq-theme';
 
   // Initialise from localStorage, falling back to system preference
   private _theme = signal<Theme>(this._load());

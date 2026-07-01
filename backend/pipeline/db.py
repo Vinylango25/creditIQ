@@ -1,5 +1,5 @@
 """
-Database schema — Umba Fraud Detection Platform.
+Database schema — CreditIQ Risk Intelligence Platform.
 
 Tables:
   transactions      — raw + enriched transaction records

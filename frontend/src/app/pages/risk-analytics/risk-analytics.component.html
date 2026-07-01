@@ -1,0 +1,271 @@
+<div class="page risk-page" *ngIf="!loading; else loadTpl">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Risk Analytics</h1>
+      <p class="page-sub">FPD · KS/Gini · Expected Loss · Roll Rates · Vintage · PSI Drift · Segmentation</p>
+    </div>
+  </div>
+
+  <!-- ══ 15 KPI CARDS ══════════════════════════════════════════════════════ -->
+  <div class="kpi-grid-5">
+
+    <div class="kpi-card kpi-card--danger">
+      <div class="kpi-card__icon">⚡</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">FPD Rate</div>
+        <div class="kpi-card__value">{{ (fpd.fpd_pct||0).toFixed(2) }}%</div>
+        <div class="kpi-card__sub">{{ fpd.fpd_count||0 }} first payment defaults</div>
+        <div class="kpi-trend">Target: &lt;5% · Warning: 8–15%</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">🗓️</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">1–7 DPD Bucket</div>
+        <div class="kpi-card__value">{{ (fpd.by_bucket?.['1-7']||0) | number }}</div>
+        <div class="kpi-card__sub">First week missed payment</div>
+        <div class="kpi-trend">Most recoverable stage</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--danger">
+      <div class="kpi-card__icon">🔴</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">30+ DPD</div>
+        <div class="kpi-card__value">{{ ((fpd.by_bucket?.['15-30']||0) + (fpd.by_bucket?.['30+']||0)) | number }}</div>
+        <div class="kpi-card__sub">Chronic delinquency</div>
+        <div class="kpi-trend">High write-off risk</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--info">
+      <div class="kpi-card__icon">📐</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">KS Statistic</div>
+        <div class="kpi-card__value">{{ (ksGini.ks_statistic||0) | number:'1.4-4' }}</div>
+        <div class="kpi-card__sub">Credit score separation power</div>
+        <div class="kpi-trend">Gini: {{ (ksGini.gini||0)|number:'1.4-4' }} · AUC: {{ (ksGini.auc_roc||0)|number:'1.3-3' }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--danger">
+      <div class="kpi-card__icon">💸</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Total Expected Loss</div>
+        <div class="kpi-card__value">KES {{ fmtKES(totalEL()) }}</div>
+        <div class="kpi-card__sub">Across all cohorts</div>
+        <div class="kpi-trend">EL = PD × LGD × EAD</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--danger">
+      <div class="kpi-card__icon">📉</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Portfolio Default Rate</div>
+        <div class="kpi-card__value">{{ (creditSum.default_pct||0).toFixed(2) }}%</div>
+        <div class="kpi-card__sub">{{ (creditSum.defaulted_loans||0) | number }} loans defaulted</div>
+        <div class="kpi-trend">Written off: {{ (creditSum.written_off_loans||0) | number }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">🔄</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Active Loans</div>
+        <div class="kpi-card__value">{{ (creditSum.active_loans||0) | number }}</div>
+        <div class="kpi-card__sub">Currently performing</div>
+        <div class="kpi-trend">DPD 0 = {{ rollRates.pct?.['Current']?.toFixed(1)||'—' }}% of portfolio</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">📡</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">PSI Alerts</div>
+        <div class="kpi-card__value">{{ alertFeatures() }}</div>
+        <div class="kpi-card__sub">Features with drift &gt;0.25</div>
+        <div class="kpi-trend">Warning (0.1–0.25): {{ warnFeatures() }}</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">⚠️</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">8–30 DPD</div>
+        <div class="kpi-card__value">{{ rollRates.counts?.['8-30 DPD']||0 | number }}</div>
+        <div class="kpi-card__sub">Mid-stage delinquency</div>
+        <div class="kpi-trend">{{ rollRates.pct?.['8-30 DPD']?.toFixed(1)||'—' }}% of portfolio</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--info">
+      <div class="kpi-card__icon">📊</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Cohorts Tracked</div>
+        <div class="kpi-card__value">{{ expectedLoss.length }}</div>
+        <div class="kpi-card__sub">Origination cohorts</div>
+        <div class="kpi-trend">Vintage analysis available</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--info">
+      <div class="kpi-card__icon">📈</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Highest EL Cohort</div>
+        <div class="kpi-card__value kpi-card__value--sm">{{ maxElCohort() }}</div>
+        <div class="kpi-card__sub">Most at-risk origination quarter</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--success">
+      <div class="kpi-card__icon">✅</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Paid Loans</div>
+        <div class="kpi-card__value">{{ (creditSum.paid_loans||0) | number }}</div>
+        <div class="kpi-card__sub">Successfully repaid</div>
+        <div class="kpi-trend">{{ creditSum.total_loans ? ((creditSum.paid_loans/creditSum.total_loans)*100).toFixed(1) : 0 }}% repayment rate</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--info">
+      <div class="kpi-card__icon">🏦</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Outstanding Balance</div>
+        <div class="kpi-card__value">KES {{ fmtKES(creditSum.outstanding_kes) }}</div>
+        <div class="kpi-card__sub">At-risk portfolio balance</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">⚖️</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Avg PD (Portfolio)</div>
+        <div class="kpi-card__value">{{ ((creditSum.avg_pd||0)*100).toFixed(1) }}%</div>
+        <div class="kpi-card__sub">Mean probability of default</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--info">
+      <div class="kpi-card__icon">🌍</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">FPD Records</div>
+        <div class="kpi-card__value">{{ (fpd.total_records||0) | number }}</div>
+        <div class="kpi-card__sub">Loans with outcome data</div>
+        <div class="kpi-trend">{{ fpd.fpd_count||0 }} FPD · {{ (fpd.total_records||0) - (fpd.fpd_count||0) }} performing</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ ROW 1: FPD Gauge + KS Curve ══════════════════════════════════════ -->
+  <div class="chart-row chart-row--40-60">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🎯 FPD Rate Gauge</h3>
+      <p class="chart-card__sub">Green &lt;8% · Yellow 8–15% · Red &gt;15% · Industry target: &lt;5%</p>
+      <app-chart [options]="fpdGaugeOpts" height="240px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">📐 CAP Curve — KS: {{ (ksGini.ks_statistic||0)|number:'1.4-4' }} · Gini: {{ (ksGini.gini||0)|number:'1.4-4' }}</h3>
+      <p class="chart-card__sub">Model vs random vs perfect separation of defaulters</p>
+      <app-chart [options]="ksOpts" height="240px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 2: Roll Matrix + Roll Donut ════════════════════════════════════ -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🔄 DPD Roll Rate Transition Matrix</h3>
+      <p class="chart-card__sub">30-day transition probabilities between delinquency buckets</p>
+      <app-chart [options]="rollMatrixOpts" height="250px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">🍩 Portfolio DPD Distribution</h3>
+      <p class="chart-card__sub">Current snapshot — share of portfolio in each DPD bucket</p>
+      <app-chart [options]="rollDonutOpts" height="250px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 3: EL by Cohort + PD/LGD Scatter ══════════════════════════════ -->
+  <div class="chart-row chart-row--60-40">
+    <div class="chart-card">
+      <h3 class="chart-card__title">💸 Expected Loss vs Disbursed — By Cohort</h3>
+      <p class="chart-card__sub">Red bars = capital at risk. Trend shows model impact over time.</p>
+      <app-chart [options]="elOpts" height="230px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">🎯 PD vs LGD — Cohort Risk Map</h3>
+      <p class="chart-card__sub">Bubble = EL rate. Top-right = highest risk cohorts.</p>
+      <app-chart [options]="elScatterOpts" height="230px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 4: Vintage Curves (full width) ════════════════════════════════ -->
+  <div class="chart-card full-width-chart">
+    <h3 class="chart-card__title">📈 Vintage Curves — Cumulative Default Rate by Months on Book</h3>
+    <p class="chart-card__sub">Each line = one origination cohort. Steeper slope = worse vintage quality. Compare across quarters to track improvements.</p>
+    <app-chart [options]="vintageOpts" height="300px"></app-chart>
+  </div>
+
+  <!-- ══ ROW 5: FPD Trend + FPD by Score Band ════════════════════════════ -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">📉 FPD Rate Trend by Cohort</h3>
+      <p class="chart-card__sub">Quarterly FPD evolution — falling rate = model improvement</p>
+      <app-chart [options]="fpdTrendOpts" height="230px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">🏅 FPD Rate by Credit Score Band</h3>
+      <p class="chart-card__sub">Validates score model — lower score = higher FPD rate</p>
+      <app-chart [options]="fpdBandOpts" height="230px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 6: Portfolio Trend + Segment Risk ══════════════════════════════ -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">📅 Portfolio Trend — Volume, Default & PD</h3>
+      <p class="chart-card__sub">Monthly evolution of portfolio risk quality</p>
+      <app-chart [options]="trendOpts" height="230px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">👔 Default Rate & PD by Employment Segment</h3>
+      <p class="chart-card__sub">Risk differentiated by employment type — key underwriting signal</p>
+      <app-chart [options]="segmentOpts" height="230px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ PSI Drift ═════════════════════════════════════════════════════════ -->
+  <div class="chart-card full-width-chart">
+    <h3 class="chart-card__title">📡 Population Stability Index (PSI) — Feature Drift Monitor</h3>
+    <p class="chart-card__sub">Baseline: 2024-Q1 → Current: 2025-Q2 · &lt;0.10: stable (🟢) · 0.10–0.25: warning (🟡) · &gt;0.25: alert (🔴)</p>
+    <app-chart [options]="psiOpts" height="260px"></app-chart>
+  </div>
+
+  <!-- PSI Table -->
+  <div class="table-card">
+    <div class="table-card__header">
+      <h3>📋 PSI Detail — All Features</h3>
+      <span class="badge badge--info">{{ psiDrift.length }} features monitored</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Feature</th><th>PSI Value</th><th>Status</th><th>Baseline</th><th>Current</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let r of psiDriftSorted()">
+            <td class="mono">{{ r.feature }}</td>
+            <td><strong>{{ r.psi | number:'1.4-4' }}</strong></td>
+            <td><span class="badge" [class]="psiClass(r.psi)">{{ psiLabel(r.psi) }}</span></td>
+            <td>{{ r.baseline_period }}</td>
+            <td>{{ r.current_period }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<ng-template #loadTpl>
+  <div class="loading-page"><div class="spinner-ring"></div><p>Loading risk analytics…</p></div>
+</ng-template>

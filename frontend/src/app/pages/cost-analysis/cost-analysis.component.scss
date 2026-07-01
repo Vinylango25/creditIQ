@@ -1,0 +1,41 @@
+@use '../../../styles' as *;
+
+.disclaimer-pill {
+  background: rgba(245, 158, 11, 0.15); color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.8rem; font-weight: 500;
+}
+.assumptions-bar {
+  background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid #8b5cf6;
+  border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.8rem; color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+  strong { color: var(--text-primary); }
+}
+
+.cost-pos { color: #10b981; font-weight: 600; }
+.cost-neg { color: #ef4444; font-weight: 600; }
+.section-title { font-size: 1rem; font-weight: 600; margin: 0 0 0.25rem; }
+.section-sub   { font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 1rem; }
+
+.scenario-panel {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.sim-inputs { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; align-items: flex-end; }
+.sim-input  { display: flex; flex-direction: column; gap: 0.3rem;
+  label { font-size: 0.78rem; color: var(--text-secondary); font-weight: 500; }
+  input { width: 140px; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text-primary); font-size: 0.9rem; }
+  &--btn { justify-content: flex-end; }
+}
+.btn-primary { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1.25rem; font-size: 0.9rem; cursor: pointer; font-weight: 600; &:hover { opacity: 0.9; } }
+
+.sim-results { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-start; }
+.sr-highlight {
+  background: var(--bg); border: 2px solid var(--border); border-radius: 10px; padding: 0.8rem 1.25rem; text-align: center; min-width: 120px;
+  .sr-val { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
+  .sr-lbl { font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem; }
+  &--green { border-color: #10b981; .sr-val { color: #10b981; } }
+  &--blue  { border-color: #3b82f6; .sr-val { color: #3b82f6; } }
+}
+.sr-detail-grid { flex: 1; min-width: 280px; background: var(--bg); border-radius: 10px; padding: 0.75rem 1rem; }
+.sr-row { display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text-secondary);
+  &:last-child { border-bottom: none; } span:last-child { font-weight: 600; } }

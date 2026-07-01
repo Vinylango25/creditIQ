@@ -1,6 +1,6 @@
-# FraudShield — Setup & Run Guide
+# CreditIQ — Setup & Run Guide
 
-Umba Fraud Detection Platform · Python 3.11+ · Angular 20 · FastAPI · SQLite · MLflow
+Credit Risk Intelligence Platform · Python 3.11+ · Angular 20 · FastAPI · SQLite · MLflow
 
 ---
 
@@ -13,7 +13,11 @@ fraud_detection/
 │   │   ├── main.py                    ← FastAPI (port 8000)
 │   │   └── routers/
 │   │       ├── auth.py                ← JWT session login
-│   │       ├── analytics.py           ← 20+ dashboard endpoints
+│   │       ├── analytics.py           ← 20+ fraud dashboard endpoints
+│   │       ├── credit.py              ← credit scoring, applicants, loans
+│   │       ├── risk_analytics.py      ← FPD, vintage, KS/Gini, PSI, EL
+│   │       ├── ab_testing.py          ← A/B tests, power analysis
+│   │       ├── cost_analysis.py       ← ROI, savings, scenario simulator
 │   │       ├── transactions.py        ← transaction explorer
 │   │       ├── predictions.py         ← real-time /score
 │   │       ├── review.py              ← human-in-the-loop queue
@@ -22,36 +26,39 @@ fraud_detection/
 │   │       └── pipeline.py            ← ingest CSVs → DB
 │   ├── config/settings.py             ← all env config
 │   ├── pipeline/
-│   │   ├── run_pipeline.py            ← master runner (16 stages)
+│   │   ├── db.py                      ← fraud detection schema
+│   │   ├── credit_db.py               ← credit/risk schema
+│   │   ├── dummy_data.py              ← seed 5k applicants + 12k loans
+│   │   ├── run_pipeline.py            ← master fraud ML runner
 │   │   ├── feature_engineering.py     ← 20+ feature groups
-│   │   ├── train.py                   ← 6 FLAML models + stacking ensemble
-│   │   ├── optuna_tuning.py           ← Optuna HP tuning
-│   │   ├── imbalance.py               ← SMOTE · ADASYN · class_weight
+│   │   ├── train.py                   ← FLAML models
+│   │   ├── imbalance.py               ← ADASYN · class_weight
 │   │   ├── explain.py                 ← SHAP + LIME
-│   │   ├── mlflow_tracking.py         ← MLflow experiment logging
-│   │   └── db.py                      ← SQLAlchemy schema
+│   │   └── mlflow_tracking.py         ← MLflow experiment logging
 │   ├── data/
 │   │   ├── raw/                       ← train.csv · test.csv · identity.csv
 │   │   ├── fraud.db                   ← SQLite (auto-created)
-│   │   ├── mlflow.db                  ← MLflow tracking
 │   │   └── predictions.csv            ← submission output
-│   ├── models/                        ← .pkl artifacts (auto-created)
 │   └── .env
 │
-├── frontend/                          ← Angular 20 SPA (port 4300)
-│   └── src/app/pages/
-│       ├── dashboard/                 ← 16 KPIs + hero metric + model table
-│       ├── transactions/              ← explorer with filters
-│       ├── model-comparison/          ← all 7 models × 8 metrics
-│       ├── model-monitoring/          ← calibration · score dist · MLflow
-│       ├── explainability/            ← SHAP global · LIME · feature importance
-│       ├── review-queue/              ← human-in-the-loop labeling
-│       ├── analytics-3d/              ← scatter · heatmap · polar · boxplot
-│       └── training/                  ← 16-step pipeline UI + MLflow runs
-│
-├── DATA_DICTIONARY.md
-├── README.md
-└── SETUP.md                           ← this file
+└── frontend/                          ← Angular 20 SPA (port 4300)
+    └── src/app/pages/
+        ├── dashboard/                 ← fraud detection overview
+        ├── credit-scoring/            ← score distribution, bureau signals
+        ├── loan-portfolio/            ← portfolio management
+        ├── applicants/                ← applicant profiles with bureau + SEON
+        ├── risk-analytics/            ← KS/Gini, PSI drift, EL, roll rates
+        ├── fpd-analysis/              ← First Payment Default
+        ├── vintage-analysis/          ← vintage curves, cohort roll rates
+        ├── ab-testing/                ← champion/challenger experiments
+        ├── cost-analysis/             ← ROI, savings waterfall, simulator
+        ├── transactions/              ← fraud transaction explorer
+        ├── model-comparison/          ← all models × metrics
+        ├── model-monitoring/          ← calibration, score dist
+        ├── explainability/            ← SHAP · LIME · feature importance
+        ├── review-queue/              ← human-in-the-loop
+        ├── analytics-3d/              ← 3D risk landscape
+        └── training/                  ← pipeline trigger + MLflow
 ```
 
 ---
@@ -60,7 +67,7 @@ fraud_detection/
 
 | Tool | Version |
 |------|---------|
-| Python | 3.11+ (use `genai` conda env) |
+| Python | 3.11+ |
 | Node.js | 18+ |
 | npm | 9+ |
 
@@ -68,84 +75,38 @@ fraud_detection/
 
 ## Backend Setup
 
-### 1. Activate the conda environment
-
-```bash
-conda activate genai
-```
-
-### 2. Install all dependencies
-
 ```bash
 cd fraud_detection/backend
 pip install -r requirements.txt
+cp .env.example .env       # edit as needed
 ```
 
-Key packages: `fastapi uvicorn pydantic sqlalchemy python-dotenv python-jose joblib numpy pandas scikit-learn lightgbm xgboost catboost flaml imbalanced-learn shap lime mlflow optuna scipy`
-
-### 3. Start the API server
+### Start the API
 
 ```bash
-cd fraud_detection/backend
-conda activate genai
 uvicorn api.main:app --reload --port 8000 --host 127.0.0.1
 ```
 
-**API:** http://localhost:8000  
-**Swagger docs:** http://localhost:8000/docs
+On first startup, the API will automatically:
+1. Initialise the fraud + credit SQLite databases
+2. Seed 5,000 applicants and 12,000 loans (if empty)
+3. Ingest raw fraud CSVs (if empty)
+
+**API docs:** http://localhost:8000/api/docs
 
 ---
 
 ## Frontend Setup
 
-### Start dev server
-
 ```bash
 cd fraud_detection/frontend
-npx ng serve --port 4300
+npm install --legacy-peer-deps
+npx ng serve --port 4300          # dev server
+# or
+npx ng build --configuration development   # build (served by FastAPI)
 ```
 
 **App:** http://localhost:4300
-
-### Build for production
-
-```bash
-npx ng build --configuration development
-```
-
-Output → `frontend/dist/fraud-detection/browser/` — served automatically by FastAPI.
-
----
-
-## Running the Pipeline (from Frontend)
-
-1. Open **http://localhost:4300**
-2. Login: `analyst@umba.com` / `umba2026`
-3. Go to **ML Pipeline** tab (⚙️ icon)
-4. Click **Ingest Data** — loads all CSVs into SQLite (160k transactions)
-5. Click **Run Full Pipeline** — runs all 16 stages:
-
-| Stage | What happens |
-|-------|-------------|
-| 1 | Load raw data |
-| 2 | Data integrity checks (temporal split, leakage guard) |
-| 3 | Feature engineering — 20+ groups (velocity, target encoding, network, PCA) |
-| 4 | Imbalance analysis — SMOTE vs ADASYN vs class_weight |
-| 5 | Temporal train/val split (last 20% by TransactionDT) |
-| 6–11 | FLAML AutoML (300s each): RF · LR · CatBoost · LightGBM · XGBoost · ExtraTrees |
-| 12 | Stacking ensemble — OOF meta-features → FLAML meta-learner |
-| 13 | Log all 7 runs to MLflow |
-| 14 | SHAP global explanations for champion |
-| 15 | Persist to database (deduplication guard) |
-| 16 | Generate `predictions.csv` |
-
-**Total runtime: ~35–45 minutes** (6 × 300s FLAML + stacking ensemble)
-
-### Champion selection formula
-```
-Composite = 0.50 × Recall + 0.20 × PR-AUC + 0.20 × AUC-ROC + 0.10 × F1
-```
-Recall is weighted highest — every missed fraud is a real loss.
 
 ---
 
@@ -153,9 +114,19 @@ Recall is weighted highest — every missed fraud is a real loss.
 
 | Email | Password | Role |
 |-------|----------|------|
-| `analyst@umba.com` | `umba2026` | Fraud Analyst |
-| `admin@umba.com` | `admin2026` | Admin |
-| `demo@umba.com` | `demo` | Viewer |
+| `analyst@creditiq.ai` | `analyst2026` | Risk Analyst |
+| `admin@creditiq.ai`   | `admin2026`   | Admin |
+| `demo@creditiq.ai`    | `demo`        | Viewer |
+
+---
+
+## Seed Credit Data (manual, if needed)
+
+```bash
+cd fraud_detection/backend
+python pipeline/dummy_data.py          # seed once
+python pipeline/dummy_data.py --force  # force re-seed
+```
 
 ---
 
@@ -173,20 +144,26 @@ Open: http://localhost:5000
 ## Quick Reference
 
 ```bash
-# Backend (conda activate genai first)
+# Backend
 uvicorn api.main:app --reload --port 8000
 
-# Frontend dev server
+# Frontend dev
 npx ng serve --port 4300
 
-# Re-evaluate champion with current weights (POST)
-curl -X POST http://localhost:8000/api/training/rechampion
+# Seed credit data
+python pipeline/dummy_data.py
 
-# Check health
+# Health check
 curl http://localhost:8000/api/health
 
-# MLflow UI
-mlflow ui --backend-store-uri sqlite:///backend/data/mlflow.db --port 5000
+# Credit summary
+curl http://localhost:8000/api/credit/summary
+
+# A/B tests
+curl http://localhost:8000/api/ab/tests
+
+# Cost summary
+curl http://localhost:8000/api/cost/summary
 ```
 
 ---
@@ -195,10 +172,10 @@ mlflow ui --backend-store-uri sqlite:///backend/data/mlflow.db --port 5000
 
 | Issue | Fix |
 |-------|-----|
-| `from jose import jwt` error | Run `conda activate genai` before uvicorn |
-| `No module named 'flaml'` | `pip install flaml` in genai env |
+| `No module named 'flaml'` | `pip install flaml` |
 | Pipeline error stage 3 | Check `data/raw/` has train.csv, test.csv, identity.csv |
-| No champion model | Run pipeline first from the Training tab |
+| No champion model | Run pipeline from the ML Pipeline tab |
 | 401 on all API calls | Login at /login — cookie-based session |
+| Credit data empty | Run `python pipeline/dummy_data.py` |
 | Port 4300 in use | Kill existing process or use different port |
-| Frontend shows blank dashboard | Backend must be running on port 8000 |
+| Frontend shows blank | Backend must be running on port 8000 |

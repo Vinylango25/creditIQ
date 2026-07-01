@@ -6,13 +6,19 @@ __pycache__/
 venv/
 *.pyc
 
-# ML model artifacts (large — exclude all .pkl except champion)
+# ML model artifacts (large)
 backend/models/*.pkl
 backend/models/*.joblib
 backend/data/mlflow.db
 backend/data/*.db-journal
 
+# Large data files — NOT committed (download separately)
+backend/data/raw/home-credit/
+backend/data/home-credit-default-risk.zip
+backend/catboost_*/
 
+# SQLite DB — not committed (auto-created on startup)
+backend/data/*.db
 
 # Node
 frontend/node_modules/

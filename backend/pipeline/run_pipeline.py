@@ -1,5 +1,5 @@
 """
-Master pipeline runner — Umba Fraud Detection Platform.
+Master pipeline runner — CreditIQ Risk Intelligence Platform.
 
 16 stages:
   1.  Load raw data
@@ -234,7 +234,7 @@ def run(data_dir: str | None = None, flaml_budget: int | None = None):
     data_dir = data_dir or RAW_DATA_DIR
 
     logger.info("=" * 70)
-    logger.info("UMBA FRAUD PIPELINE — %s", start.strftime("%Y-%m-%d %H:%M:%S"))
+    logger.info("CREDITIQ FRAUD PIPELINE — %s", start.strftime("%Y-%m-%d %H:%M:%S"))
     logger.info("run_id=%s", run_id)
     logger.info("=" * 70)
 
@@ -407,7 +407,7 @@ def run(data_dir: str | None = None, flaml_budget: int | None = None):
 
 if __name__ == "__main__":
     import argparse
-    ap = argparse.ArgumentParser(description="Umba Fraud Pipeline")
+    ap = argparse.ArgumentParser(description="CreditIQ Fraud Pipeline")
     ap.add_argument("--data-dir",      default=None)
     ap.add_argument("--flaml-budget",  type=int, default=None)
     args = ap.parse_args()

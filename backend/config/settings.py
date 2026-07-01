@@ -1,5 +1,5 @@
 """
-Central configuration for the Umba Fraud Detection Platform.
+Central configuration for the CreditIQ Risk Intelligence Platform.
 
 Directory layout — everything lives under fraud_detection/:
 

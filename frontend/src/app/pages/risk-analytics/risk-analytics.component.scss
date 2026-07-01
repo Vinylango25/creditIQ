@@ -1,0 +1,26 @@
+@use '../../../styles' as *;
+
+.risk-page { padding: 20px 24px; max-width: 1600px; margin: 0 auto; }
+
+.kpi-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+  @media (max-width: 1300px) { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 1000px) { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width:  700px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.kpi-trend { font-size: .65rem; color: var(--text-muted); margin-top: 4px; line-height: 1.3; }
+
+.full-width-chart {
+  margin-bottom: 14px;
+}
+
+.chart-row--40-60 { display: grid; grid-template-columns: 40fr 60fr; gap: 12px; margin-bottom: 14px;
+  @media (max-width: 1000px) { grid-template-columns: 1fr; } }
+.chart-row--60-40 { display: grid; grid-template-columns: 60fr 40fr; gap: 12px; margin-bottom: 14px;
+  @media (max-width: 1000px) { grid-template-columns: 1fr; } }
+
+.kpi-card__value--sm { font-size: 1rem; font-weight: 700; }

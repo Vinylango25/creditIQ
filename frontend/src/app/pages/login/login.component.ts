@@ -18,16 +18,16 @@ import { ThemeService } from '../../core/theme.service';
       </button>
 
       <div class="login-card">
-        <div class="login-card__logo">
-          <img src="/umba-logo.png" alt="Umba" class="login-logo" />
+        <div class="login-card__icon">
+          <div class="brand-icon">⚡</div>
         </div>
-        <h1>FraudShield</h1>
-        <p class="login-card__sub">Umba Fraud Detection Platform</p>
+        <h1>CreditIQ</h1>
+        <p class="login-card__sub">Risk Intelligence Platform — Credit · Fraud · Analytics</p>
 
         <form (ngSubmit)="submit()" #f="ngForm" class="login-form">
           <div class="field">
             <label>Email</label>
-            <input type="email" [(ngModel)]="email" name="email" placeholder="analyst@umba.com" required />
+            <input type="email" [(ngModel)]="email" name="email" placeholder="analyst@creditiq.ai" required />
           </div>
           <div class="field">
             <label>Password</label>
@@ -84,8 +84,13 @@ import { ThemeService } from '../../core/theme.service';
       text-align: center;
       box-shadow: var(--shadow-lg);
     }
-    .login-card__logo { margin-bottom: 12px; }
-    .login-logo { width: 56px; height: 56px; object-fit: contain; border-radius: 12px; }
+    .login-card__icon { margin-bottom: 12px; }
+    .brand-icon { 
+      width: 64px; height: 64px; border-radius: 16px; 
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff; font-size: 2rem; display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(59,130,246,.35);
+    }
     h1 { margin: 0 0 4px; color: var(--text); font-size: 1.5rem; font-weight: 700; }
     .login-card__sub { color: var(--text-muted); font-size: .85rem; margin: 0 0 28px; }
     .login-form { text-align: left; }
@@ -139,9 +144,9 @@ export class LoginComponent {
   error    = '';
 
   demoUsers = [
-    { email: 'analyst@umba.com', pass: 'umba2026' },
-    { email: 'admin@umba.com',   pass: 'admin2026' },
-    { email: 'demo@umba.com',    pass: 'demo'      },
+    { email: 'analyst@creditiq.ai', pass: 'analyst2026' },
+    { email: 'admin@creditiq.ai',   pass: 'admin2026'   },
+    { email: 'demo@creditiq.ai',    pass: 'demo'        },
   ];
 
   constructor(

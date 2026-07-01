@@ -1,0 +1,74 @@
+<div class="dashboard" *ngIf="!loading; else loadTpl">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Vintage &amp; Cohort Analysis</h1>
+      <p class="page-sub">Cumulative default curves · Roll rate transitions · Expected loss by cohort</p>
+    </div>
+  </div>
+
+  <!-- Vintage Curves (full width) -->
+  <div class="chart-card" style="margin-bottom:1.5rem">
+    <h3 class="chart-card__title">📈 Vintage Curves — Cumulative Default Rate by Months on Book</h3>
+    <p class="chart-card__sub">Each line = one origination cohort. Steeper slope = worse vintage quality.</p>
+    <app-chart [options]="vintageOpts" height="320px"></app-chart>
+  </div>
+
+  <!-- Roll Rate Matrix + PD/LGD scatter -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🔄 DPD Roll Rate Transition Matrix</h3>
+      <p class="chart-card__sub">Probability of transitioning from one DPD bucket to another (30-day horizon)</p>
+      <app-chart [options]="rollMatrixOpts" height="280px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">🎯 PD vs LGD — Cohort Risk Map</h3>
+      <p class="chart-card__sub">Bubble size = EL rate. Top-right = highest risk cohorts.</p>
+      <app-chart [options]="pdLgdOpts" height="280px"></app-chart>
+    </div>
+  </div>
+
+  <!-- EL by cohort bar -->
+  <div class="chart-card" style="margin-bottom:1.5rem">
+    <h3 class="chart-card__title">💸 Disbursed Volume vs Expected Loss by Cohort</h3>
+    <p class="chart-card__sub">EL = PD × LGD × EAD — visualises capital at risk per origination quarter</p>
+    <app-chart [options]="elBarOpts" height="240px"></app-chart>
+  </div>
+
+  <!-- EL Table -->
+  <div class="table-card">
+    <div class="table-card__header">
+      <h3>📋 Expected Loss Detail — By Cohort</h3>
+      <span class="badge badge--info">{{ elTable.length }} cohorts</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Cohort</th><th>Loans</th><th>Disbursed (KES)</th>
+            <th>Total EL (KES)</th><th>EL Rate</th><th>Avg PD</th><th>Avg LGD</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of elTable">
+            <td><strong>{{ r.cohort }}</strong></td>
+            <td>{{ r.loans | number }}</td>
+            <td>{{ fmtKES(r.disbursed_kes) }}</td>
+            <td>{{ fmtKES(r.total_el_kes) }}</td>
+            <td>
+              <span class="badge" [class]="elRateClass(r.el_rate)">
+                {{ (r.el_rate * 100).toFixed(2) }}%
+              </span>
+            </td>
+            <td>{{ (r.avg_pd * 100).toFixed(1) }}%</td>
+            <td>{{ (r.avg_lgd * 100).toFixed(1) }}%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<ng-template #loadTpl>
+  <div class="loading-page"><div class="spinner-ring"></div><p>Loading vintage data…</p></div>
+</ng-template>

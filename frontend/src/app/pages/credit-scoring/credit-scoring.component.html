@@ -1,0 +1,272 @@
+<div class="page credit-page" *ngIf="!loading; else loadTpl">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Credit Scoring</h1>
+      <p class="page-sub">Bureau intelligence · PD modelling · Portfolio analytics · KS/Gini · FPD</p>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge--info">TransUnion + SEON Enriched</span>
+      <span class="badge badge--success">{{ summary.total_applicants | number }} applicants</span>
+    </div>
+  </div>
+
+  <!-- ══ GAUGE + 15 KPIs ═══════════════════════════════════════════════════ -->
+  <div class="gauge-kpi-row">
+
+    <!-- Score Gauge -->
+    <div class="gauge-card">
+      <app-chart [options]="scoreGaugeOpts" height="200px"></app-chart>
+      <div class="gauge-meta">
+        <div class="gm-grade" [class]="scoreGrade(avgScore)">Grade {{ avgScore >= 750 ? 'A' : avgScore >= 700 ? 'B' : avgScore >= 650 ? 'C' : avgScore >= 600 ? 'D' : 'E' }}</div>
+        <div class="gm-label">{{ scoreLabel(avgScore) }} Portfolio</div>
+        <div class="gm-range">Range: 300 – 850</div>
+      </div>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid-4">
+
+      <div class="kpi-card kpi-card--info">
+        <div class="kpi-card__icon">👥</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Total Applicants</div>
+          <div class="kpi-card__value">{{ (summary.total_applicants||0) | number }}</div>
+          <div class="kpi-card__sub">Avg Score: <span [class]="scoreGrade(avgScore)"><b>{{ avgScore }}</b></span></div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-card__icon">💳</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Total Loans</div>
+          <div class="kpi-card__value">{{ (summary.total_loans||0) | number }}</div>
+          <div class="kpi-card__sub">Active: {{ (summary.active_loans||0) | number }}</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--danger">
+        <div class="kpi-card__icon">📉</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Default Rate</div>
+          <div class="kpi-card__value">{{ (summary.default_pct||0).toFixed(2) }}%</div>
+          <div class="kpi-card__sub">{{ (summary.defaulted_loans||0) | number }} loans defaulted</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--danger">
+        <div class="kpi-card__icon">⚡</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">FPD Rate</div>
+          <div class="kpi-card__value">{{ (fpd.fpd_pct||0).toFixed(2) }}%</div>
+          <div class="kpi-card__sub">{{ fpd.fpd_count||0 }} first payment defaults</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--warning">
+        <div class="kpi-card__icon">🏦</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Total Disbursed</div>
+          <div class="kpi-card__value">KES {{ fmtKES(summary.total_disbursed_kes) }}</div>
+          <div class="kpi-card__sub">Outstanding: KES {{ fmtKES(summary.outstanding_kes) }}</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--danger">
+        <div class="kpi-card__icon">💸</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Expected Loss (EL)</div>
+          <div class="kpi-card__value">KES {{ fmtKES(summary.total_expected_loss) }}</div>
+          <div class="kpi-card__sub">PD × LGD × EAD</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--warning">
+        <div class="kpi-card__icon">📊</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Avg PD (Portfolio)</div>
+          <div class="kpi-card__value">{{ ((summary.avg_pd||0)*100).toFixed(1) }}%</div>
+          <div class="kpi-card__sub">Avg LGD exposure</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--info">
+        <div class="kpi-card__icon">📐</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">KS Statistic</div>
+          <div class="kpi-card__value">{{ (ksGini.ks_statistic||0) | number:'1.4-4' }}</div>
+          <div class="kpi-card__sub">Gini: {{ (ksGini.gini||0) | number:'1.4-4' }}</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--success">
+        <div class="kpi-card__icon">✅</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Paid Loans</div>
+          <div class="kpi-card__value">{{ (summary.paid_loans||0) | number }}</div>
+          <div class="kpi-card__sub">{{ summary.total_loans ? ((summary.paid_loans/summary.total_loans)*100).toFixed(1) : 0 }}% repayment rate</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--info">
+        <div class="kpi-card__icon">🌍</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Countries</div>
+          <div class="kpi-card__value">{{ byCountry.length }}</div>
+          <div class="kpi-card__sub">KE + NG markets</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--warning">
+        <div class="kpi-card__icon">🏷️</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">Products</div>
+          <div class="kpi-card__value">{{ byProduct.length }}</div>
+          <div class="kpi-card__sub">Loan product types</div>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--info">
+        <div class="kpi-card__icon">📈</div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__label">AUC (Score Model)</div>
+          <div class="kpi-card__value">{{ (ksGini.auc_roc||0) | number:'1.4-4' }}</div>
+          <div class="kpi-card__sub">Credit score discrimination</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ ROW 1: Score Distribution + PD Distribution ══════════════════════ -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🎯 Credit Score Band Distribution</h3>
+      <p class="chart-card__sub">Applicant population by creditworthiness tier (300–850)</p>
+      <app-chart [options]="scoreDistOpts" height="220px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">📊 Probability of Default (PD) Distribution</h3>
+      <p class="chart-card__sub">Model output — lower is better. Red = high risk segments.</p>
+      <app-chart [options]="pdDistOpts" height="220px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 2: CAP Curve + FPD by Score Band ══════════════════════════════ -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">📐 CAP Curve — KS: {{ (ksGini.ks_statistic||0)|number:'1.4-4' }} · Gini: {{ (ksGini.gini||0)|number:'1.4-4' }}</h3>
+      <p class="chart-card__sub">Cumulative Accuracy Profile — how well the model separates defaults from non-defaults</p>
+      <app-chart [options]="ksCapOpts" height="230px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">⚡ FPD Rate by Credit Score Band</h3>
+      <p class="chart-card__sub">First Payment Default rate falls sharply with higher scores</p>
+      <app-chart [options]="fpdBandOpts" height="230px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 3: Portfolio by Product + Country ════════════════════════════ -->
+  <div class="chart-row chart-row--65-35">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🏷️ Portfolio Performance by Product</h3>
+      <p class="chart-card__sub">Volume, default rate, and average score per lending product</p>
+      <app-chart [options]="productOpts" height="240px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">🌍 Portfolio by Country</h3>
+      <p class="chart-card__sub">Kenya vs Nigeria loan distribution</p>
+      <app-chart [options]="countryOpts" height="240px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 4: Heatmap + Portfolio Trend ════════════════════════════════ -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🌡️ Average Score: Age Group × Employment</h3>
+      <p class="chart-card__sub">Heatmap — green = higher scores, red = lower creditworthiness</p>
+      <app-chart [options]="heatmapOpts" height="230px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">📅 Portfolio Trend — Volume, Default & Score</h3>
+      <p class="chart-card__sub">Monthly evolution — track credit quality improvement over time</p>
+      <app-chart [options]="trendOpts" height="230px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 5: Bureau Signals ════════════════════════════════════════════ -->
+  <div class="section-label">📋 TransUnion Bureau Signal Analysis</div>
+  <div class="chart-row chart-row--4">
+    <div class="chart-card">
+      <h3 class="chart-card__title">💳 Credit Utilization</h3>
+      <p class="chart-card__sub">0 = low risk · 1 = maxed out</p>
+      <app-chart [options]="utilizationOpts" height="180px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">⚖️ Debt-to-Income Ratio</h3>
+      <p class="chart-card__sub">DTI &gt; 0.5 = elevated risk</p>
+      <app-chart [options]="dtiOpts" height="180px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">🔍 Hard Inquiries (12m)</h3>
+      <p class="chart-card__sub">Frequent inquiries signal financial stress</p>
+      <app-chart [options]="inquiryOpts" height="180px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">⚠️ Delinquent Accounts</h3>
+      <p class="chart-card__sub">Count of delinquent trade lines</p>
+      <app-chart [options]="delinquencyOpts" height="180px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ ROW 6: DPD Roll Rate + Score Default Rate ════════════════════════ -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🔄 DPD Roll Rate Buckets</h3>
+      <p class="chart-card__sub">Current portfolio delinquency — from Current to Written Off</p>
+      <app-chart [options]="rollOpts" height="230px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">📉 Default Rate by Score Band</h3>
+      <p class="chart-card__sub">Validates the score model — lower score = higher default rate</p>
+      <app-chart [options]="pdHeatmapOpts" height="230px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ Product Performance Table ════════════════════════════════════════ -->
+  <div class="table-card">
+    <div class="table-card__header">
+      <h3>📋 Product Performance Detail</h3>
+      <a routerLink="/loan-portfolio" class="view-all-link">View all loans →</a>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Product</th><th>Loans</th><th>Disbursed (KES)</th><th>Avg Score</th><th>Avg PD</th><th>Defaults</th><th>Default Rate</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of byProduct">
+            <td><span class="chan-tag">{{ p.product }}</span></td>
+            <td>{{ p.total_loans | number }}</td>
+            <td>{{ fmtKES(p.disbursed_kes) }}</td>
+            <td><span [class]="scoreGrade(p.avg_score)"><b>{{ p.avg_score | number:'1.0-0' }}</b></span></td>
+            <td>{{ (p.avg_pd * 100).toFixed(1) }}%</td>
+            <td>{{ p.defaults | number }}</td>
+            <td>
+              <span class="badge"
+                [class.badge--danger]="p.default_rate > 0.15"
+                [class.badge--warning]="p.default_rate > 0.08 && p.default_rate <= 0.15"
+                [class.badge--success]="p.default_rate <= 0.08">
+                {{ (p.default_rate * 100).toFixed(1) }}%
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<ng-template #loadTpl>
+  <div class="loading-page"><div class="spinner-ring"></div><p>Loading credit scoring data…</p></div>
+</ng-template>

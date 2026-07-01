@@ -1,5 +1,5 @@
 """
-MLflow experiment tracking for the Umba Fraud Detection Platform.
+MLflow experiment tracking for the CreditIQ Risk Intelligence Platform.
 
 Logs:
   - all model hyperparameters

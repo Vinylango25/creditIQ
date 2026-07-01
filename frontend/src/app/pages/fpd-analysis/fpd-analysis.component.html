@@ -1,0 +1,98 @@
+<div class="dashboard" *ngIf="!loading; else loadTpl">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">FPD Analysis</h1>
+      <p class="page-sub">First Payment Default — the primary early warning indicator in mobile lending</p>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-card kpi-card--danger">
+      <div class="kpi-card__icon">⚡</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">FPD Rate</div>
+        <div class="kpi-card__value">{{ (fpdSummary.fpd_pct || 0).toFixed(2) }}%</div>
+        <div class="kpi-card__sub">{{ fpdSummary.fpd_count || 0 }} of {{ fpdSummary.total_records || 0 }} loans</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">🗓️</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">1–7 Day DPD</div>
+        <div class="kpi-card__value">{{ (fpdSummary.by_bucket?.['1-7'] || 0) | number }}</div>
+        <div class="kpi-card__sub">First week missed</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">📆</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">8–14 Day DPD</div>
+        <div class="kpi-card__value">{{ (fpdSummary.by_bucket?.['8-14'] || 0) | number }}</div>
+        <div class="kpi-card__sub">Second week missed</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--danger">
+      <div class="kpi-card__icon">📅</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">15–30 Day DPD</div>
+        <div class="kpi-card__value">{{ (fpdSummary.by_bucket?.['15-30'] || 0) | number }}</div>
+        <div class="kpi-card__sub">Month-end delinquency</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--danger">
+      <div class="kpi-card__icon">🔴</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">30+ DPD</div>
+        <div class="kpi-card__value">{{ (fpdSummary.by_bucket?.['30+'] || 0) | number }}</div>
+        <div class="kpi-card__sub">Chronic delinquency</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gauge + Bucket -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">🎯 FPD Rate Gauge</h3>
+      <p class="chart-card__sub">Target: &lt;8% · Warning: 8–15% · Alert: &gt;15%</p>
+      <app-chart [options]="gaugeOpts" height="260px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">📊 FPD Severity Buckets</h3>
+      <p class="chart-card__sub">Distribution of defaulters by DPD bucket</p>
+      <app-chart [options]="bucketOpts" height="260px"></app-chart>
+    </div>
+  </div>
+
+  <!-- Trend + Score Band -->
+  <div class="chart-row chart-row--50-50">
+    <div class="chart-card">
+      <h3 class="chart-card__title">📉 FPD Rate Trend by Cohort</h3>
+      <p class="chart-card__sub">Quarterly FPD evolution — shows model improvement over time</p>
+      <app-chart [options]="trendOpts" height="250px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">🏅 FPD by Credit Score Band</h3>
+      <p class="chart-card__sub">How FPD rate decreases with higher credit scores</p>
+      <app-chart [options]="scoreBandOpts" height="250px"></app-chart>
+    </div>
+  </div>
+
+  <!-- What is FPD info box -->
+  <div class="info-box">
+    <h3>📚 About First Payment Default (FPD)</h3>
+    <p>FPD occurs when a borrower fails to make their very first scheduled repayment. In mobile lending,
+       FPD is the <strong>most critical early warning metric</strong> because:</p>
+    <ul>
+      <li>It signals the loan was likely <strong>fraudulent or severely mis-sold</strong> — the borrower never intended to repay</li>
+      <li>It is used as a <strong>primary label for model training</strong> — FPD-rate reduction is the #1 model success metric</li>
+      <li>It drives <strong>collection strategy</strong> — FPD accounts receive intensive outreach within 48 hours</li>
+      <li>Industry benchmark: <strong>FPD &lt; 5%</strong> for healthy mobile lending; &gt;10% triggers risk review</li>
+    </ul>
+  </div>
+
+</div>
+<ng-template #loadTpl>
+  <div class="loading-page"><div class="spinner-ring"></div><p>Loading FPD data…</p></div>
+</ng-template>

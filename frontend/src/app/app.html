@@ -1,24 +1,43 @@
-<!-- ── Login ─────────────────────────────────────────────────────────────── -->
-<ng-container *ngIf="!showShell">
-  <router-outlet />
-</ng-container>
+<!-- CreditIQ — Risk Intelligence Platform -->
 
-<!-- ── App shell ────────────────────────────────────────────────────────── -->
-<div class="shell" *ngIf="showShell">
+<!-- Mobile overlay -->
+<div class="mobile-nav-overlay" [class.open]="mobileOpen()" (click)="closeMobile()"></div>
 
-  <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<!-- Mobile drawer -->
+<div class="mobile-nav-drawer" [class.open]="mobileOpen()">
+  <div class="drawer-header">
+    <span class="drawer-brand">⚡ CreditIQ</span>
+    <button class="drawer-close" (click)="closeMobile()">✕</button>
+  </div>
+  <ng-container *ngFor="let group of navGroups">
+    <div class="drawer-group">
+      <div class="drawer-group-label">{{ group.icon }} {{ group.label }}</div>
+      <ng-container *ngFor="let sub of subNav[group.primary] || []">
+        <button class="drawer-link"
+                [class.active]="isItemActive(sub.path)"
+                (click)="router.navigate([sub.path])">
+          <span class="dl-icon">{{ group.icon }}</span>
+          {{ sub.label }}
+        </button>
+      </ng-container>
+    </div>
+  </ng-container>
+</div>
+
+<div class="shell">
+
+  <!-- ════════ HEADER ════════ -->
   <header class="header">
 
-    <!-- Brand -->
     <a class="brand" routerLink="/dashboard">
-      <img src="/umba-logo.png" class="brand__logo" alt="Umba" />
+      <div class="brand__icon">⚡</div>
       <div class="brand__text">
-        <span class="brand__name">FraudShield</span>
-        <span class="brand__by">by Umba</span>
+        <span class="brand__name">CreditIQ</span>
+        <span class="brand__by">Risk Intelligence</span>
       </div>
     </a>
 
-    <!-- ── 4 main tabs ── -->
+    <!-- Desktop tabs -->
     <nav class="main-tabs">
       <button *ngFor="let group of navGroups"
               class="main-tab"
@@ -29,43 +48,20 @@
       </button>
     </nav>
 
-    <!-- ── Right controls ── -->
     <div class="header-right">
-      <!-- Theme toggle -->
       <button class="icon-btn" (click)="theme.toggle()"
               [title]="theme.isDark() ? 'Light mode' : 'Dark mode'">
         {{ theme.isDark() ? '☀️' : '🌙' }}
       </button>
-
-      <!-- User -->
-      <div class="user-wrap">
-        <button class="user-btn" (click)="toggleUserMenu()">
-          <span class="avatar">{{ userInitial }}</span>
-          <div class="user-meta">
-            <span class="user-meta__name">{{ userName }}</span>
-            <span class="user-meta__role">{{ userRole }}</span>
-          </div>
-          <span class="chevron" [class.open]="userMenuOpen()">▾</span>
-        </button>
-
-        <div class="user-menu" *ngIf="userMenuOpen()">
-          <div class="user-menu__profile">
-            <span class="avatar avatar--lg">{{ userInitial }}</span>
-            <div>
-              <div class="user-menu__name">{{ userName }}</div>
-              <div class="user-menu__role">{{ userRole }}</div>
-            </div>
-          </div>
-          <div class="user-menu__divider"></div>
-          <button class="user-menu__item" (click)="logout()">
-            <span>↩</span> Sign out
-          </button>
-        </div>
-      </div>
+      <!-- Mobile menu button -->
+      <button class="mobile-menu-btn" (click)="toggleMobile()" aria-label="Open menu">
+        ☰
+      </button>
     </div>
+
   </header>
 
-  <!-- ═══════════════════════ SUB-NAV (tab pills) ═══════════════════════ -->
+  <!-- ════════ SUB-NAV ════════ -->
   <div class="subnav" *ngIf="hasSubNav">
     <a *ngFor="let sub of getSubNav()"
        class="subnav-pill"
@@ -75,7 +71,7 @@
     </a>
   </div>
 
-  <!-- ═══════════════════════ PAGE CONTENT ═══════════════════════ -->
+  <!-- ════════ CONTENT ════════ -->
   <main class="main-content">
     <router-outlet />
   </main>

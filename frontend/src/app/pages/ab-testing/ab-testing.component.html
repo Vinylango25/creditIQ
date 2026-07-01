@@ -1,0 +1,145 @@
+<div class="page" *ngIf="!loading; else loadTpl">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">A/B Testing</h1>
+      <p class="page-sub">Champion/challenger experiments · Statistical significance · Power analysis</p>
+    </div>
+  </div>
+
+  <!-- ══ KPI ROW ════════════════════════════════════════════════════════════ -->
+  <div class="kpi-row">
+    <div class="kpi-card kpi-card--info">
+      <div class="kpi-card__icon">⚗️</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Total Tests</div>
+        <div class="kpi-card__value">{{ abSummary.total_tests || 0 }}</div>
+        <div class="kpi-card__sub">{{ abSummary.active_tests || 0 }} active · {{ abSummary.completed_tests || 0 }} completed</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--success">
+      <div class="kpi-card__icon">✅</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Significant Results</div>
+        <div class="kpi-card__value">{{ abSummary.significant_results || 0 }}</div>
+        <div class="kpi-card__sub">Treatment wins: {{ abSummary.treatment_wins || 0 }}</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--success">
+      <div class="kpi-card__icon">📈</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Avg Default Lift</div>
+        <div class="kpi-card__value">{{ (abSummary.avg_lift_pct || 0).toFixed(1) }}%</div>
+        <div class="kpi-card__sub">Avg reduction in default rate</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--warning">
+      <div class="kpi-card__icon">🔬</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Active Now</div>
+        <div class="kpi-card__value">{{ abSummary.active_tests || 0 }}</div>
+        <div class="kpi-card__sub">Experiments running</div>
+      </div>
+    </div>
+    <div class="kpi-card kpi-card--info">
+      <div class="kpi-card__icon">🏆</div>
+      <div class="kpi-card__body">
+        <div class="kpi-card__label">Treatment Wins</div>
+        <div class="kpi-card__value">{{ abSummary.treatment_wins || 0 }}</div>
+        <div class="kpi-card__sub">of {{ abSummary.completed_tests || 0 }} completed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ COMPARISON CHART + TEST LIST ═════════════════════════════════════ -->
+  <div class="chart-row chart-row--65-35">
+    <div class="chart-card">
+      <h3 class="chart-card__title">📊 Control vs Treatment — Default Rate</h3>
+      <p class="chart-card__sub">Lower bar = better performing arm. Green = treatment beats control.</p>
+      <app-chart [options]="comparisonOpts" height="250px"></app-chart>
+    </div>
+    <div class="chart-card">
+      <h3 class="chart-card__title">🧪 Experiments</h3>
+      <div class="test-list">
+        <div class="test-item" *ngFor="let t of tests"
+             [class.test-item--active]="selectedTest?.test_id === t.test_id"
+             (click)="selectTest(t)">
+          <div class="test-item__name">{{ t.name }}</div>
+          <div class="test-item__meta">
+            <span class="badge" [class]="statusClass(t.status)">{{ t.status }}</span>
+            <span class="badge badge--success" *ngIf="t.winner === 'treatment'">🏆 Treatment wins</span>
+          </div>
+          <div class="test-item__lift" *ngIf="t.lift != null">
+            <span [class]="liftClass(t.lift)">{{ (t.lift * 100).toFixed(1) }}% lift</span>
+            <span class="sig-pill" *ngIf="t.is_significant">✓ p={{t.p_value?.toFixed(4)}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SELECTED TEST DETAIL ══════════════════════════════════════════════ -->
+  <div class="detail-panel" *ngIf="selectedTest">
+    <div class="detail-header">
+      <div>
+        <h2>{{ selectedTest.name }}</h2>
+        <p>{{ selectedTest.description }}</p>
+        <em class="hypothesis">💡 {{ selectedTest.hypothesis }}</em>
+      </div>
+      <div class="detail-badges">
+        <span class="badge" [class]="statusClass(selectedTest.status)">{{ selectedTest.status }}</span>
+        <span class="badge badge--success" *ngIf="selectedTest.winner === 'treatment'">🏆 Treatment Wins</span>
+        <span class="badge badge--info" *ngIf="selectedTest.is_significant">✓ Sig. at {{ selectedTest.confidence_level * 100 | number:'1.0-0' }}%</span>
+        <span class="badge badge--warning" *ngIf="!selectedTest.is_significant">Inconclusive</span>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="stat-block"><div class="sb-val">{{ selectedTest.control_model }}</div><div class="sb-lbl">Control</div></div>
+      <div class="stat-block"><div class="sb-val">{{ selectedTest.treatment_model }}</div><div class="sb-lbl">Treatment</div></div>
+      <div class="stat-block"><div class="sb-val">{{ selectedTest.control_n | number }}</div><div class="sb-lbl">Control N</div></div>
+      <div class="stat-block"><div class="sb-val">{{ selectedTest.treatment_n | number }}</div><div class="sb-lbl">Treatment N</div></div>
+      <div class="stat-block"><div class="sb-val">{{ (selectedTest.control_default_rate * 100).toFixed(2) }}%</div><div class="sb-lbl">Control Default</div></div>
+      <div class="stat-block" [class.stat-block--win]="selectedTest.lift < 0">
+        <div class="sb-val">{{ (selectedTest.treatment_default_rate * 100).toFixed(2) }}%</div><div class="sb-lbl">Treatment Default</div>
+      </div>
+      <div class="stat-block" [class.stat-block--win]="selectedTest.lift < 0">
+        <div class="sb-val">{{ selectedTest.lift_pct.toFixed(1) }}%</div><div class="sb-lbl">Lift</div>
+      </div>
+      <div class="stat-block" [class.stat-block--win]="selectedTest.is_significant">
+        <div class="sb-val">{{ selectedTest.p_value | number:'1.4-4' }}</div><div class="sb-lbl">p-value</div>
+      </div>
+    </div>
+    <div class="notes-box" *ngIf="selectedTest.notes">📝 {{ selectedTest.notes }}</div>
+
+    <div class="chart-card" style="margin-top:14px" *ngIf="liftCurve?.weeks?.length">
+      <h3 class="chart-card__title">📈 Cumulative Lift Over Time</h3>
+      <app-chart [options]="liftOpts" height="220px"></app-chart>
+    </div>
+  </div>
+
+  <!-- ══ POWER ANALYSIS ════════════════════════════════════════════════════ -->
+  <div class="power-panel">
+    <h2 class="section-title">🔋 Sample Size Calculator</h2>
+    <p class="section-sub">How many loans do you need per arm for statistical validity?</p>
+
+    <div class="power-inputs">
+      <div class="input-group"><label>Baseline Default Rate</label><input type="number" [(ngModel)]="baselineRate" step="0.01" min="0.01" max="0.99"/></div>
+      <div class="input-group"><label>Min Effect (absolute)</label><input type="number" [(ngModel)]="minDetectable" step="0.005" min="0.001" max="0.5"/></div>
+      <div class="input-group"><label>Significance (α)</label><input type="number" [(ngModel)]="alpha" step="0.01" min="0.01" max="0.2"/></div>
+      <div class="input-group"><label>Statistical Power</label><input type="number" [(ngModel)]="power" step="0.05" min="0.5" max="0.99"/></div>
+      <div class="input-group input-group--btn"><button class="btn-primary" (click)="runPowerAnalysis()">Calculate →</button></div>
+    </div>
+
+    <div class="power-result" *ngIf="powerResult?.n_per_arm">
+      <div class="pr-card pr-card--primary"><div class="pr-val">{{ powerResult.n_per_arm | number }}</div><div class="pr-lbl">Per arm needed</div></div>
+      <div class="pr-card"><div class="pr-val">{{ powerResult.total_n | number }}</div><div class="pr-lbl">Total sample</div></div>
+      <div class="pr-card"><div class="pr-val">{{ (powerResult.baseline_rate * 100).toFixed(1) }}%</div><div class="pr-lbl">Baseline rate</div></div>
+      <div class="pr-card"><div class="pr-val">{{ (powerResult.treatment_rate * 100).toFixed(1) }}%</div><div class="pr-lbl">Expected treatment</div></div>
+      <div class="pr-card"><div class="pr-val">{{ (alpha * 100).toFixed(0) }}%</div><div class="pr-lbl">α error</div></div>
+      <div class="pr-card"><div class="pr-val">{{ (power * 100).toFixed(0) }}%</div><div class="pr-lbl">Power</div></div>
+    </div>
+  </div>
+
+</div>
+<ng-template #loadTpl><div class="loading-page"><div class="spinner-ring"></div><p>Loading A/B tests…</p></div></ng-template>
