@@ -46,6 +46,7 @@ app.add_middleware(
         "https://browser-psi-opal.vercel.app",
         "https://browser-nckptephv-creditiq.vercel.app",
         "https://creditiq.vercel.app",
+        "https://creditiq-tdyi.onrender.com",
         "http://localhost:4200",
         "http://localhost:4300",
         "http://127.0.0.1:4300",
